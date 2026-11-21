@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loan Approval Predictor</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#5b6572;--bd:#dde2e8;--ac:#1565c0;--ok:#2e7d32;--no:#c62828;--okbg:#e6f4e7;--nobg:#fbe9e9}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1a1f26;--tx:#e8ecf1;--mut:#9aa5b1;--bd:#2c343e;--ac:#64a8ff;--ok:#6fd37a;--no:#ff7b72;--okbg:#17301b;--nobg:#3a1c1c}}
+:root[data-theme="dark"]{--bg:#111418;--card:#1a1f26;--tx:#e8ecf1;--mut:#9aa5b1;--bd:#2c343e;--ac:#64a8ff;--ok:#6fd37a;--no:#ff7b72;--okbg:#17301b;--nobg:#3a1c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:0}.sub{color:var(--mut);margin:2px 0 18px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px}
+.card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
+label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 3px}
+select,input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit}
+.res{margin-top:14px;display:grid;gap:14px;grid-template-columns:1.2fr 1fr 1fr 1fr}
+@media(max-width:700px){.res{grid-template-columns:1fr 1fr}.res .big{grid-column:1/-1}}
+.k{color:var(--mut);font-size:.8rem}.v{font-size:1.5rem;font-weight:650}
+.bar{height:12px;border-radius:6px;background:var(--bd);overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;width:0;transition:width .3s}
+.badge{display:inline-block;padding:4px 12px;border-radius:999px;font-weight:650}
+ul{margin:8px 0 0;padding-left:18px}.met{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:6px}
+.met b{display:block;font-size:1.1rem}.foot{color:var(--mut);font-size:.8rem;margin-top:14px}
+</style></head><body><main>
+<h1>🏦 Loan Approval Predictor</h1>
+<p class="sub">Live demo of the trained Logistic Regression model. Change any field and the prediction updates instantly.</p>
+<div class="grid">
+<div class="card"><h2>Applicant</h2>
+<label>Gender</label><select id="Gender"><option>Male</option><option>Female</option></select>
+<label>Married</label><select id="Married"><option>Yes</option><option>No</option></select>
+<label>Dependents</label><select id="Dependents"><option>0</option><option>1</option><option>2</option><option>3+</option></select>
+<label>Education</label><select id="Education"><option>Graduate</option><option>Not Graduate</option></select>
+<label>Self employed</label><select id="Self_Employed"><option>No</option><option>Yes</option></select></div>
+<div class="card"><h2>Finances</h2>
+<label>Applicant income (monthly)</label><input id="ApplicantIncome" type="number" value="5000" min="0" step="500">
+<label>Co-applicant income (monthly)</label><input id="CoapplicantIncome" type="number" value="0" min="0" step="500">
+<label>Credit history meets guidelines?</label><select id="Credit_History"><option value="1">Yes</option><option value="0">No</option></select></div>
+<div class="card"><h2>Loan</h2>
+<label>Loan amount (in thousands)</label><input id="LoanAmount" type="number" value="130" min="5" step="5">
+<label>Term (months)</label><select id="Loan_Amount_Term"><option>360</option><option>300</option><option>240</option><option>180</option><option>120</option><option>480</option><option>84</option><option>60</option></select>
+<label>Property area</label><select id="Property_Area"><option>Urban</option><option>Semiurban</option><option>Rural</option></select></div>
+</div>
+<div class="res">
+<div class="card big"><div class="k">Approval probability</div><div class="v" id="p">-</div><div class="bar"><i id="bar"></i></div><span class="badge" id="badge"></span></div>
+<div class="card"><div class="k">Estimated EMI / month</div><div class="v" id="emi">-</div></div>
+<div class="card"><div class="k">EMI as % of income</div><div class="v" id="ratio">-</div></div>
+<div class="card"><div class="k">Factors</div><ul id="notes" style="font-size:.85rem"></ul></div>
+</div>
+<div class="card" style="margin-top:14px"><h2>Model performance (held-out test set)</h2>
+<div class="met"><span>Accuracy<b>0.948</b></span><span>Precision<b>0.970</b></span><span>Recall<b>0.968</b></span><span>F1<b>0.969</b></span><span>ROC-AUC<b>0.929</b></span></div></div>
+<p class="foot">Educational demo trained on synthetic data. Not for real lending decisions. EMI is a simple estimate without interest.</p>
+</main>
+<script>
+const P={"NUM": ["ApplicantIncome", "CoapplicantIncome", "LoanAmount", "Loan_Amount_Term", "Credit_History", "TotalIncome", "EMI", "EMI_to_Income", "LogTotalIncome", "LogLoanAmount"], "CAT": ["Gender", "Married", "Dependents", "Education", "Self_Employed", "Property_Area"], "med": [5274.0, 373.5, 253.5, 360.0, 1.0, 6218.5, 752.7777777777778, 0.12431162941367024, 8.735444793418557, 5.539298906088481], "mean": [6170.0575, 900.0191666666667, 296.30583333333334, 341.175, 0.83875, 7070.076666666667, 916.8311342592592, 0.13258905680644392, 8.71982138212876, 5.50370213669784], "scale": [3770.867710380961, 1204.000743548762, 178.39659939109143, 63.60125293577163, 0.36776138663541064, 3949.499342738126, 656.5340230138829, 0.06452703221880145, 0.5439861875911811, 0.6456912808280888], "cats": [["Female", "Male"], ["No", "Yes"], ["0", "1", "2", "3+"], ["Graduate", "Not Graduate"], ["No", "Yes"], ["Rural", "Semiurban", "Urban"]], "coef": [0.08777362246337206, 0.032028041517313706, 0.20614381831314374, -0.0830910705874974, 2.0705084865825034, 0.0935674303253219, -0.16961816274512798, -0.36466341629962146, -0.17608775438485785, 0.20206693775724952, 0.25808685030341344, -0.2575065366860762, -0.36087378675832393, 0.36145410037566034, -0.23017263971077584, 0.10093464895384813, 0.0006984272741362999, 0.1291198771001282, 0.5138049127250484, -0.5132245991077112, 0.1551266398570735, -0.1545463262397373, -0.17517138096758844, 0.39134019334294357, -0.2155884987580177], "b": 0.943383288669866};
+
+function predict(i){
+  const t=i.ApplicantIncome+i.CoapplicantIncome, emi=i.LoanAmount*1000/i.Loan_Amount_Term;
+  const d={...i,TotalIncome:t,EMI:emi,EMI_to_Income:t?emi/t:NaN,LogTotalIncome:Math.log1p(t),LogLoanAmount:Math.log1p(i.LoanAmount)};
+  let z=P.b,k=0;
+  P.NUM.forEach((n,j)=>{let v=d[n]; if(!isFinite(v)) v=P.med[j]; z+=P.coef[k++]*(v-P.mean[j])/P.scale[j];});
+  P.CAT.forEach((n,j)=>{P.cats[j].forEach(c=>{z+=P.coef[k++]*(d[n]===c?1:0);});});
+  return {p:1/(1+Math.exp(-z)),emi,ratio:d.EMI_to_Income};
+}
+
+const $=id=>document.getElementById(id), NUMF=["ApplicantIncome","CoapplicantIncome","LoanAmount","Loan_Amount_Term","Credit_History"];
+function read(){const o={};["Gender","Married","Dependents","Education","Self_Employed","Property_Area","Credit_History","Loan_Amount_Term","ApplicantIncome","CoapplicantIncome","LoanAmount"].forEach(k=>{o[k]=$(k).value});
+NUMF.forEach(k=>o[k]=parseFloat(o[k])||0);return o}
+function render(){const i=read(),r=predict(i),ok=r.p>=.5;
+$("p").textContent=(r.p*100).toFixed(1)+"%";$("bar").style.width=(r.p*100)+"%";$("bar").style.background=ok?"var(--ok)":"var(--no)";
+const b=$("badge");b.textContent=ok?"Likely APPROVED":"Likely REJECTED";b.style.background=ok?"var(--okbg)":"var(--nobg)";b.style.color=ok?"var(--ok)":"var(--no)";
+$("emi").textContent="Rs "+Math.round(r.emi).toLocaleString("en-IN");$("ratio").textContent=isFinite(r.ratio)?(r.ratio*100).toFixed(1)+"%":"n/a";
+const n=[];if(i.Credit_History===0)n.push("Poor credit history sharply lowers approval odds.");
+if(r.ratio>.4)n.push("EMI above 40% of income is a high repayment burden.");
+if(i.LoanAmount*1000>60*(i.ApplicantIncome+i.CoapplicantIncome))n.push("Loan is large relative to income.");
+if(!n.length)n.push("No major red flags detected.");$("notes").innerHTML=n.map(x=>"<li>"+x+"</li>").join("")}
+document.querySelectorAll("select,input").forEach(e=>{e.addEventListener("input",render);e.addEventListener("change",render)});render();
+</script></body></html>

@@ -1,0 +1,25 @@
+Loaded 3000 rows | approval rate 83.5%
+Logistic Regression  CV acc 0.943 | CV AUC 0.945 +/- 0.015
+Decision Tree        CV acc 0.934 | CV AUC 0.895 +/- 0.025
+Random Forest        CV acc 0.950 | CV AUC 0.927 +/- 0.015
+Gradient Boosting    CV acc 0.950 | CV AUC 0.937 +/- 0.011
+XGBoost              CV acc 0.949 | CV AUC 0.933 +/- 0.009
+
+Best by CV AUC: Logistic Regression -> tuning
+Best params: {'model__C': 0.1}
+
+TEST METRICS: {
+  "best_model": "Logistic Regression",
+  "best_params": {
+    "model__C": 0.1
+  },
+  "accuracy": 0.9483333333333334,
+  "precision": 0.97,
+  "recall": 0.9680638722554891,
+  "f1": 0.9690309690309691,
+  "roc_auc": 0.9292526058993125,
+  "n_train": 2400,
+  "n_test": 600
+}
+
+Saved model, metrics and figures.
